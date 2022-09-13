@@ -1,0 +1,56 @@
+#!/bin/bash
+crtEmail=`git config user.email`
+crtBranch=`git branch --show-current`
+# find module
+branchReg="([^\-]+$)"
+module=''
+if [[ $crtBranch =~ $branchReg ]]; 
+then
+    module=${BASH_REMATCH[0]};
+fi
+# end
+in_array () {
+  search=$1
+  shift        # remove first argument from list of args $@
+  for val; do  # equivalent to `for val in "$@"`
+    if [[ $search = $val ]]; then
+      return   # returns exit code of the successful [[ test ]], 0
+    fi
+  done
+  return 1
+}
+# declare module account here
+array=()
+foundAccountInModule(){
+  targetModule=$1
+  case $targetModule in
+  dx360)
+    array=("ngocpn@mor.com.vn" "quanbm@mor.com.vn")
+    ;;
+  feedback360)
+    array=("hoangvh@mor.com.vn")
+    ;;
+  *)
+    array=()
+    echo 'Không tìm thấy module tương ứng'
+    ;;
+  esac
+}
+foundAccountInModule ${module}
+allowCommit(){
+  echo "$crtEmail được cho phép sử dụng ở module $module"
+  exit 0
+}
+abortCommit(){
+  echo "Account $crtEmail không được sử dụng ở module $module, hoặc branch $crtBranch hiện không đúng convention"
+  exit 1
+}
+# end
+commitAction(){
+  if in_array "$crtEmail" "${array[@]}"; then
+    allowCommit
+  else
+    abortCommit
+  fi
+}
+commitAction
